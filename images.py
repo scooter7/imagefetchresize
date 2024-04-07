@@ -1,7 +1,7 @@
 import streamlit as st
 import flickrapi
 import requests
-from PIL import Image
+from PIL import Image, ImageResampling
 from io import BytesIO
 
 FLICKR_PUBLIC = st.secrets["flickr"]["api_key"]
@@ -10,7 +10,7 @@ flickr = flickrapi.FlickrAPI(FLICKR_PUBLIC, FLICKR_SECRET, format='parsed-json')
 
 def resize_image(image_data, width, height):
     img = Image.open(BytesIO(image_data))
-    img_resized = img.resize((width, height), Image.ANTIALIAS)
+    img_resized = img.resize((width, height), ImageResampling.LANCZOS)  # Updated to use ImageResampling.LANCZOS
     return img_resized
 
 def fetch_flickr_images(search_term, width, height):
