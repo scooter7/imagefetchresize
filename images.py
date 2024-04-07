@@ -7,7 +7,7 @@ FLICKR_SECRET = st.secrets["flickr"]["api_secret"]
 flickr = flickrapi.FlickrAPI(FLICKR_PUBLIC, FLICKR_SECRET, format='parsed-json')
 
 def fetch_flickr_images(search_term):
-    photos = flickr.photos.search(text=search_term, per_page=5, media='photos')
+    photos = flickr.photos.search(text=search_term, per_page=100, media='photos')  # Fetching 100 images
     urls = []
     for photo in photos['photos']['photo']:
         url = f"https://live.staticflickr.com/{photo['server']}/{photo['id']}_{photo['secret']}_w.jpg"
