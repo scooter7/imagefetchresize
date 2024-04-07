@@ -1,20 +1,29 @@
 import streamlit as st
 import flickrapi
 import requests
+from PIL import Image
+from io import BytesIO
 
 FLICKR_PUBLIC = st.secrets["flickr"]["api_key"]
 FLICKR_SECRET = st.secrets["flickr"]["api_secret"]
 flickr = flickrapi.FlickrAPI(FLICKR_PUBLIC, FLICKR_SECRET, format='parsed-json')
 
-def fetch_flickr_images(search_term):
-    photos = flickr.photos.search(text=search_term, per_page=100, media='photos')  # Fetching 100 images
-    urls = []
+def resize_image(image_data, width, height):
+    img = Image.open(BytesIO(image_data))
+    img_resized = img.resize((width, height), Image.ANTIALIAS)
+    return img_resized
+
+def fetch_flickr_images(search_term, width, height):
+    photos = flickr.photos.search(text=search_term, per_page=50, media='photos')
+    images = []
     for photo in photos['photos']['photo']:
         url = f"https://live.staticflickr.com/{photo['server']}/{photo['id']}_{photo['secret']}_w.jpg"
-        urls.append(url)
-    return urls
+        response = requests.get(url)
+        img_resized = resize_image(response.content, width, height)
+        images.append(img_resized)
+    return images
 
-def fetch_wikimedia_images(search_term):
+def fetch_wikimedia_images(search_term, width, height):
     SEARCH_URL = "https://commons.wikimedia.org/w/api.php"
     params = {
         'action': 'query',
@@ -22,38 +31,40 @@ def fetch_wikimedia_images(search_term):
         'generator': 'search',
         'gsrnamespace': 6,
         'gsrsearch': search_term,
-        'gsrlimit': 5,
+        'gsrlimit': 50,
         'prop': 'imageinfo',
         'iiprop': 'url',
-        'iiurlwidth': 200,
+        'iiurlwidth': width,
     }
     response = requests.get(SEARCH_URL, params=params).json()
     images = []
     if 'query' in response:
         for page_id in response['query']['pages']:
             image_info = response['query']['pages'][page_id]['imageinfo'][0]
-            images.append(image_info['url'])
+            url = image_info['url']
+            response = requests.get(url)
+            img_resized = resize_image(response.content, width, height)
+            images.append(img_resized)
     return images
 
 st.title("Image Search App")
+
+# Image size controls
+width = st.sidebar.number_input("Width", min_value=50, max_value=1000, value=300)
+height = st.sidebar.number_input("Height", min_value=50, max_value=1000, value=300)
+
 search_term = st.text_input("Enter a search term:")
 
 if search_term:
-    flickr_images = fetch_flickr_images(search_term)
-    wikimedia_images = fetch_wikimedia_images(search_term)
+    flickr_images = fetch_flickr_images(search_term, width, height)
+    wikimedia_images = fetch_wikimedia_images(search_term, width, height)
     
     if flickr_images:
         st.subheader("Flickr Images:")
-        for image_url in flickr_images:
-            st.image(image_url, use_column_width=True)
-    else:
-        st.write("No Flickr images found.")
-        
+        for img in flickr_images:
+            st.image(img, use_column_width=True)
+            
     if wikimedia_images:
         st.subheader("Wikimedia Commons Images:")
-        for image_url in wikimedia_images:
-            st.image(image_url, use_column_width=True)
-    else:
-        st.write("No Wikimedia Commons images found.")
-else:
-    st.write("Please enter a search term.")
+        for img in wikimedia_images:
+            st.image(img, use_column_width=True)
