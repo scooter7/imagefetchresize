@@ -1,7 +1,7 @@
 import streamlit as st
 import flickrapi
 import requests
-from PIL import Image, ImageResampling
+from PIL import Image
 from io import BytesIO
 
 FLICKR_PUBLIC = st.secrets["flickr"]["api_key"]
