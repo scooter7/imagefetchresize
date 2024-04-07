@@ -2,11 +2,8 @@ import streamlit as st
 import flickrapi
 import requests
 
-# Flickr API credentials
-FLICKR_PUBLIC = 'your_flickr_api_key'
-FLICKR_SECRET = 'your_flickr_api_secret'
-
-# Initialize Flickr API
+FLICKR_PUBLIC = st.secrets["flickr"]["api_key"]
+FLICKR_SECRET = st.secrets["flickr"]["api_secret"]
 flickr = flickrapi.FlickrAPI(FLICKR_PUBLIC, FLICKR_SECRET, format='parsed-json')
 
 def fetch_flickr_images(search_term):
@@ -31,7 +28,6 @@ def fetch_wikimedia_images(search_term):
         'iiurlwidth': 200,
     }
     response = requests.get(SEARCH_URL, params=params).json()
-    
     images = []
     if 'query' in response:
         for page_id in response['query']['pages']:
@@ -40,20 +36,24 @@ def fetch_wikimedia_images(search_term):
     return images
 
 st.title("Image Search App")
-
 search_term = st.text_input("Enter a search term:")
 
 if search_term:
     flickr_images = fetch_flickr_images(search_term)
     wikimedia_images = fetch_wikimedia_images(search_term)
     
-    if flickr_images or wikimedia_images:
-        st.write("Flickr Images:")
+    if flickr_images:
+        st.subheader("Flickr Images:")
         for image_url in flickr_images:
             st.image(image_url, use_column_width=True)
-            
-        st.write("Wikimedia Commons Images:")
+    else:
+        st.write("No Flickr images found.")
+        
+    if wikimedia_images:
+        st.subheader("Wikimedia Commons Images:")
         for image_url in wikimedia_images:
             st.image(image_url, use_column_width=True)
     else:
-        st.write("No images found.")
+        st.write("No Wikimedia Commons images found.")
+else:
+    st.write("Please enter a search term.")
