@@ -10,7 +10,8 @@ flickr = flickrapi.FlickrAPI(FLICKR_PUBLIC, FLICKR_SECRET, format='parsed-json')
 
 def resize_image(image_data, width, height):
     img = Image.open(BytesIO(image_data))
-    img_resized = img.resize((width, height), ImageResampling.LANCZOS)  # Updated to use ImageResampling.LANCZOS
+    # Correct usage of the resampling filter
+    img_resized = img.resize((width, height), Image.Resampling.LANCZOS)
     return img_resized
 
 def fetch_flickr_images(search_term, width, height):
@@ -49,7 +50,6 @@ def fetch_wikimedia_images(search_term, width, height):
 
 st.title("Image Search App")
 
-# Image size controls
 width = st.sidebar.number_input("Width", min_value=50, max_value=1000, value=300)
 height = st.sidebar.number_input("Height", min_value=50, max_value=1000, value=300)
 
